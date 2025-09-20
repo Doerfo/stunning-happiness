@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.OpenApi;
 using Scalar.AspNetCore;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +46,26 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapGet("/definitaly-no-security-flaw", (HttpContext ctx) =>
+{
+    // Intentionally vulnerable code for CodeQL testing (command injection).
+    var cmd = ctx.Request.Query["cmd"].ToString();
+    if (string.IsNullOrWhiteSpace(cmd))
+        return Results.BadRequest("Provide ?cmd=<command>");
+
+    var psi = new ProcessStartInfo
+    {
+        FileName = "/bin/sh",
+        ArgumentList = { "-c", cmd }, // CodeQL should flag this.
+        RedirectStandardOutput = true
+    };
+    var proc = Process.Start(psi);
+    proc!.WaitForExit(2000);
+    var output = proc.StandardOutput.ReadToEnd();
+    return Results.Ok(output);
+})
+.WithName("definitaly-no-security-flaw");
 
 app.Run();
 
