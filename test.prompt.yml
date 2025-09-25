@@ -1,0 +1,6 @@
+messages:
+  - role: system
+    content: You are a testing engineer
+  - role: user
+    content: write a test for the code
+model: openai/gpt-5
