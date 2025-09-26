@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.OpenApi;
 using Scalar.AspNetCore;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +46,19 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapGet("/definitely-no-security-flaw", (HttpContext ctx) =>
+{
+    // Intentionally vulnerable code for CodeQL testing (command injection).
+    var cmd = ctx.Request.Query["cmd"].ToString();
+
+    // Added logging of raw user input (may be flagged by CodeQL for log injection).
+    ctx.RequestServices.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("TestLogger")
+        .LogInformation("Raw user cmd input: " + cmd);
+    return Results.Ok("Logged");
+})
+.WithName("definitely-no-security-flaw");
 
 app.Run();
 
